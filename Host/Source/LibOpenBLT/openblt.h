@@ -246,7 +246,10 @@ typedef struct t_blt_bootloader_info
   uint32_t appSize;         /**< Size of application area in bytes.                   */
   // New fields for version 3
   uint32_t eraseSize;       /**< Minimum erase page size in bytes.                    */
-  uint16_t padding;         /**< Padding for 44 bytes.                                */
+  // New fields for version 4
+  uint16_t boardCode;       /**< Board code (0xB0 = BASKET_ORIG, 0xB1 = ABASK).       */
+  uint16_t deviceCode;      /**< Device code.                                         */
+  uint16_t bootloaderVersionCode; /**< Bootloader version code.                       */
   uint32_t crc32;           /**< STM32 hardware compatible CRC32                       */
 } tBltBootloaderInfo;
 

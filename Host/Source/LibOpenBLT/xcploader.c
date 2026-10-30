@@ -2122,7 +2122,6 @@ bool XcpLoaderGetBootloaderInfo(tBltBootloaderInfo * info)
     {
       uint32_t signature;
       uint16_t structVersion;
-      uint32_t computedCrc;
 
       signature = (uint32_t)infoData[0] | 
                   ((uint32_t)infoData[1] << 8) |
@@ -2157,6 +2156,9 @@ bool XcpLoaderGetBootloaderInfo(tBltBootloaderInfo * info)
         info->appStartAddr   = 0U;
         info->appSize        = 0U;
         info->eraseSize      = 0U;
+        info->boardCode             = 0U;
+        info->deviceCode            = 0U;
+        info->bootloaderVersionCode = 0U;
         info->crc32          = 0U;
 
         /* Version 2 fields (present if length >= 38) */
@@ -2175,21 +2177,39 @@ bool XcpLoaderGetBootloaderInfo(tBltBootloaderInfo * info)
                                 ((uint32_t)infoData[37] << 24);
         }
 
-        /* Version 3 fields (present if length >= 46) */
-        if (structVersion >= 3 && infoLength >= 48) {
+        /* Version 3 fields (present if length >= 48).
+         * Note: version 3 had an unused 'padding' field at offset 42. It was replaced
+         * by 'boardCode' in version 4, therefore the check here is an EXACT match on
+         * version 3 - version 4 and newer are handled by the branch below. */
+        if (structVersion == 3 && infoLength >= 48)
+        {
             info->eraseSize = (uint32_t)infoData[38] | 
                               ((uint32_t)infoData[39] << 8) |
                               ((uint32_t)infoData[40] << 16) |
                               ((uint32_t)infoData[41] << 24);
-            info->padding   = (uint16_t)infoData[42] | ((uint16_t)infoData[43] << 8);
             info->crc32     = (uint32_t)infoData[44] | 
                               ((uint32_t)infoData[45] << 8) |
                               ((uint32_t)infoData[46] << 16) |
                               ((uint32_t)infoData[47] << 24);
         }
+        /* Version 4 fields (present if length >= 52) */
+        else if (structVersion >= 4 && infoLength >= 52)
+        {
+            info->eraseSize = (uint32_t)infoData[38] | 
+                              ((uint32_t)infoData[39] << 8) |
+                              ((uint32_t)infoData[40] << 16) |
+                              ((uint32_t)infoData[41] << 24);
+            info->boardCode             = (uint16_t)infoData[42] | ((uint16_t)infoData[43] << 8);
+            info->deviceCode            = (uint16_t)infoData[44] | ((uint16_t)infoData[45] << 8);
+            info->bootloaderVersionCode = (uint16_t)infoData[46] | ((uint16_t)infoData[47] << 8);
+            info->crc32                 = (uint32_t)infoData[48] | 
+                                          ((uint32_t)infoData[49] << 8) |
+                                          ((uint32_t)infoData[50] << 16) |
+                                          ((uint32_t)infoData[51] << 24);
+        }
         else if (structVersion >= 3)
         {
-          /* Version 3 declared but not enough data */
+          /* Version 3 or newer declared but not enough data */
           result = false;
         }
       }
