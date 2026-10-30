@@ -7,16 +7,28 @@
 
 /* -------------------------------------------------------------------------
    Custom flash layout for STM32G474 with 512 KB total flash.
+
+   !!! BASKET-specific customization (not part of upstream OpenBLT) !!!
+
    - Bootloader occupies 40 KB (0x08000000 - 0x08009FFF) – excluded from layout.
-   - Application area starts at 0x0800A000 and continues to end of flash.
+   - Application area starts at 0x0800A000 (APPLICATION_START_ADDR from
+     shared/memory_map.h) and is limited to APPLICATION_MAX_SIZE = 456 KB,
+     i.e. up to 0x0807BFFF.
    - All sectors are defined with a size of 4 KB (0x1000) to ensure
      that each erase operation is fast and allows servicing the watchdog.
-   - The last 16 KB (0x08080000 - 0x08083FFF) are reserved for future use
-     and also not included.
+   - The last 16 KB (0x0807C000 - 0x0807FFFF) are DELIBERATELY NOT part of this
+     layout, because the application keeps its persistent data there:
+         ConfigStorage  0x0807C000 - 0x0807DFFF
+         CalStorage     0x0807E000 - 0x0807FFFF
+     (see firmware/linker/STM32G474XX_APP.ld). Keeping those sectors out of
+     flashLayout[] makes FlashErase()/FlashWrite() reject these addresses, so a
+     firmware update can never erase the application's configuration and
+     calibration data.
+   - Consequence: FLASH_END_ADDRESS == 0x0807BFFF.
 ------------------------------------------------------------------------- */
 
 static const tFlashSector flashLayout[] = {
-    /* --- 4 KB sectors from 0x0800A000 up to 0x0807FFFF --- */
+    /* --- 4 KB sectors from 0x0800A000 up to 0x0807BFFF --- */
     { 0x0800A000, 0x01000 },
     { 0x0800B000, 0x01000 },
     { 0x0800C000, 0x01000 },
@@ -130,11 +142,7 @@ static const tFlashSector flashLayout[] = {
     { 0x08078000, 0x01000 },
     { 0x08079000, 0x01000 },
     { 0x0807A000, 0x01000 },
-    { 0x0807B000, 0x01000 },
-    { 0x0807C000, 0x01000 },
-    { 0x0807D000, 0x01000 },
-    { 0x0807E000, 0x01000 },
-    { 0x0807F000, 0x01000 }
+    { 0x0807B000, 0x01000 }
 };
 
 #endif /* FLASH_LAYOUT_C */
