@@ -140,6 +140,27 @@ void CpuStartUserProgram(void)
    * user program's reset handler.
    */
   pProgResetHandler = (void(*)(void))(*((blt_addr *)CPU_USER_PROGRAM_STARTADDR_PTR));
+#if (BOOT_CPU_CLEAR_NVIC_ENABLE > 0)
+  {
+    blt_int32u idx;
+    /* Disable all interrupts and clear all pending interrupts in the NVIC before the
+     * global interrupt flag is enabled below. The bootloader itself runs with the
+     * global interrupts disabled, but it did initialize its own peripherals (such as
+     * the communication UART) and those interrupts may still be enabled and/or pending
+     * in the NVIC. Without this step such an interrupt would be serviced by the user
+     * program's vector table before its own initialization ran, which can make the
+     * user program hang or hard fault.
+     */
+    for (idx = 0U; idx < (sizeof(NVIC->ICER) / sizeof(NVIC->ICER[0])); idx++)
+    {
+      NVIC->ICER[idx] = 0xFFFFFFFFU;
+      NVIC->ICPR[idx] = 0xFFFFFFFFU;
+    }
+    /* Make sure the NVIC changes took effect before the global interrupt flag is set. */
+    __DSB();
+    __ISB();
+  }
+#endif
   /* The Cortex-M4 core has interrupts enabled out of reset. the bootloader
    * explicitly disables these for security reasons. Enable them here again, so it does 
    * not have to be done by the user program.

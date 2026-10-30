@@ -64,6 +64,14 @@
 #error "BOOT_CPU_USER_PROGRAM_START_HOOK must be 0 or 1"
 #endif
 
+#ifndef BOOT_CPU_CLEAR_NVIC_ENABLE
+#define BOOT_CPU_CLEAR_NVIC_ENABLE         (0)
+#endif
+
+#if (BOOT_CPU_CLEAR_NVIC_ENABLE < 0) || (BOOT_CPU_CLEAR_NVIC_ENABLE > 1)
+#error "BOOT_CPU_CLEAR_NVIC_ENABLE must be 0 or 1"
+#endif
+
 
 /****************************************************************************************
 *   C O M M U N I C A T I O N   I N T E R F A C E   C O N F I G U R A T I O N   C H E C K
